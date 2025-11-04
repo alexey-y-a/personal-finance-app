@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ConsoleApp.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">personal-finance-app</a> &gt; <a href="index.source.html" class="el_package">ru.financeapp.cli</a> &gt; <span class="el_source">ConsoleApp.java</span></div><h1>ConsoleApp.java</h1><pre class="source lang-java linenums">package ru.financeapp.cli;
+
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.*;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import ru.financeapp.core.FinanceService;
+import ru.financeapp.core.Transaction;
+import ru.financeapp.core.UserService;
+import ru.financeapp.core.Wallet;
+import ru.financeapp.exceptions.InvalidInputException;
+import ru.financeapp.infra.FileJsonStorage;
+import ru.financeapp.infra.Storage;
+
+public class ConsoleApp {
+    protected final UserService userService;
+    protected final FinanceService financeService;
+    protected final Storage storage;
+<span class="pc" id="L22">    boolean running = true;</span>
+
+<span class="nc" id="L24">    public ConsoleApp() {</span>
+<span class="nc" id="L25">        this.storage = new FileJsonStorage();</span>
+<span class="nc" id="L26">        this.userService = new UserService(storage);</span>
+<span class="nc" id="L27">        this.financeService = new FinanceService(userService);</span>
+<span class="nc" id="L28">    }</span>
+
+<span class="fc" id="L30">    protected ConsoleApp(UserService userService, FinanceService financeService, Storage storage) {</span>
+<span class="fc" id="L31">        this.userService = userService;</span>
+<span class="fc" id="L32">        this.financeService = financeService;</span>
+<span class="fc" id="L33">        this.storage = storage;</span>
+<span class="fc" id="L34">    }</span>
+
+    public void run() {
+<span class="nc" id="L37">        System.out.println(&quot;=== Personal Finance App: Управление финансами ===&quot;);</span>
+<span class="nc" id="L38">        printHelp();</span>
+<span class="nc" id="L39">        Scanner scanner = new Scanner(System.in);</span>
+<span class="nc bnc" id="L40" title="All 2 branches missed.">        while (running) {</span>
+<span class="nc" id="L41">            System.out.print(&quot;&gt; &quot;);</span>
+<span class="nc" id="L42">            String input = scanner.nextLine().trim();</span>
+<span class="nc bnc" id="L43" title="All 2 branches missed.">            if (input.isEmpty()) {</span>
+<span class="nc" id="L44">                continue;</span>
+            }
+            try {
+<span class="nc" id="L47">                handleCommand(new CommandParser.Command(input));</span>
+<span class="nc" id="L48">            } catch (InvalidInputException e) {</span>
+<span class="nc" id="L49">                System.out.println(&quot;Error: &quot; + e.getMessage() + &quot;. Type 'help' for usage.&quot;);</span>
+<span class="nc" id="L50">            }</span>
+<span class="nc" id="L51">        }</span>
+<span class="nc" id="L52">        saveAll();</span>
+<span class="nc" id="L53">    }</span>
+
+    void handleCommand(CommandParser.Command cmd) {
+        try {
+<span class="pc bpc" id="L57" title="7 of 14 branches missed.">            switch (cmd.action) {</span>
+<span class="fc" id="L58">                case &quot;register&quot; -&gt; register(cmd.args);</span>
+<span class="fc" id="L59">                case &quot;login&quot; -&gt; login(cmd.args);</span>
+<span class="fc" id="L60">                case &quot;add&quot; -&gt; add(cmd.args);</span>
+                case &quot;set&quot; -&gt; {
+<span class="pc bpc" id="L62" title="1 of 4 branches missed.">                    if (cmd.args.isEmpty() || !cmd.args.get(0).equals(&quot;budget&quot;)) {</span>
+<span class="fc" id="L63">                        throw new InvalidInputException(&quot;Usage: set budget &lt;category&gt; &lt;amount&gt;&quot;);</span>
+                    }
+<span class="fc" id="L65">                    setBudget(cmd.args.subList(1, cmd.args.size()));</span>
+<span class="fc" id="L66">                }</span>
+                case &quot;edit&quot; -&gt; {
+<span class="nc bnc" id="L68" title="All 4 branches missed.">                    if (cmd.args.isEmpty() || !cmd.args.get(0).equals(&quot;budget&quot;)) {</span>
+<span class="nc" id="L69">                        throw new InvalidInputException(&quot;Usage: edit budget &lt;category&gt; &lt;amount&gt;&quot;);</span>
+                    }
+<span class="nc" id="L71">                    setBudget(cmd.args.subList(1, cmd.args.size()));</span>
+<span class="nc" id="L72">                    System.out.println(&quot;Budget updated!&quot;);</span>
+<span class="nc" id="L73">                }</span>
+<span class="fc" id="L74">                case &quot;stats&quot; -&gt; stats(cmd.args);</span>
+<span class="nc" id="L75">                case &quot;transfer&quot; -&gt; transfer(cmd.args);</span>
+<span class="fc" id="L76">                case &quot;export&quot; -&gt; export(cmd.args);</span>
+<span class="nc" id="L77">                case &quot;import&quot; -&gt; imprt(cmd.args);</span>
+<span class="nc" id="L78">                case &quot;list&quot; -&gt; listCategories();</span>
+<span class="nc" id="L79">                case &quot;logout&quot; -&gt; logout();</span>
+<span class="nc" id="L80">                case &quot;help&quot; -&gt; printHelp();</span>
+<span class="nc" id="L81">                case &quot;exit&quot; -&gt; exit();</span>
+<span class="fc" id="L82">                default -&gt; System.out.println(&quot;Unknown command. Type 'help' for usage.&quot;);</span>
+            }
+<span class="fc" id="L84">        } catch (Exception e) {</span>
+<span class="fc" id="L85">            System.out.println(&quot;Error: &quot; + e.getMessage() + &quot;. Type 'help' for usage.&quot;);</span>
+<span class="fc" id="L86">        }</span>
+<span class="fc" id="L87">    }</span>
+
+    private void register(List&lt;String&gt; args) {
+<span class="pc bpc" id="L90" title="1 of 2 branches missed.">        if (args.size() != 2)</span>
+<span class="nc" id="L91">            throw new InvalidInputException(&quot;Usage: register &lt;username&gt; &lt;password&gt;&quot;);</span>
+<span class="fc" id="L92">        userService.register(args.get(0), args.get(1));</span>
+<span class="fc" id="L93">        System.out.println(&quot;Registered successfully!&quot;);</span>
+<span class="fc" id="L94">    }</span>
+
+    private void login(List&lt;String&gt; args) {
+<span class="pc bpc" id="L97" title="1 of 2 branches missed.">        if (args.size() != 2) throw new InvalidInputException(&quot;Usage: login &lt;username&gt; &lt;password&gt;&quot;);</span>
+<span class="fc" id="L98">        userService.login(args.get(0), args.get(1));</span>
+<span class="fc" id="L99">        System.out.println(&quot;Logged in as &quot; + args.get(0));</span>
+<span class="fc" id="L100">    }</span>
+
+    private void add(List&lt;String&gt; args) {
+<span class="pc bpc" id="L103" title="1 of 2 branches missed.">        if (!userService.isLoggedIn())</span>
+<span class="nc" id="L104">            throw new InvalidInputException(&quot;Login first. Usage: login &lt;username&gt; &lt;password&gt;&quot;);</span>
+<span class="pc bpc" id="L105" title="1 of 2 branches missed.">        if (args.size() != 3)</span>
+<span class="nc" id="L106">            throw new InvalidInputException(&quot;Usage: add &lt;income|expense&gt; &lt;category&gt; &lt;amount&gt;&quot;);</span>
+<span class="fc" id="L107">        String type = args.get(0);</span>
+<span class="fc" id="L108">        String cat = args.get(1);</span>
+<span class="fc" id="L109">        double amt = Double.parseDouble(args.get(2));</span>
+<span class="fc bfc" id="L110" title="All 2 branches covered.">        if (&quot;income&quot;.equals(type)) {</span>
+<span class="fc" id="L111">            financeService.addIncome(cat, amt);</span>
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">        } else if (&quot;expense&quot;.equals(type)) {</span>
+<span class="nc" id="L113">            financeService.addExpense(cat, amt);</span>
+        } else {
+<span class="fc" id="L115">            throw new InvalidInputException(</span>
+                    &quot;Type must be 'income' or 'expense'. Usage: add &lt;income|expense&gt; &lt;category&gt; &lt;amount&gt;&quot;);
+        }
+<span class="fc" id="L118">        System.out.println(&quot;Added &quot; + type + &quot; successfully!&quot;);</span>
+<span class="fc" id="L119">    }</span>
+
+    private void setBudget(List&lt;String&gt; args) {
+<span class="pc bpc" id="L122" title="1 of 2 branches missed.">        if (!userService.isLoggedIn())</span>
+<span class="nc" id="L123">            throw new InvalidInputException(&quot;Login first. Usage: login &lt;username&gt; &lt;password&gt;&quot;);</span>
+<span class="pc bpc" id="L124" title="1 of 2 branches missed.">        if (args.size() != 2)</span>
+<span class="nc" id="L125">            throw new InvalidInputException(&quot;Usage: set budget &lt;category&gt; &lt;amount&gt;&quot;);</span>
+<span class="fc" id="L126">        double amt = Double.parseDouble(args.get(1));</span>
+<span class="fc" id="L127">        financeService.setBudget(args.get(0), amt);</span>
+<span class="fc" id="L128">        System.out.println(&quot;Budget set!&quot;);</span>
+<span class="fc" id="L129">    }</span>
+
+    private void stats(List&lt;String&gt; args) {
+<span class="pc bpc" id="L132" title="1 of 2 branches missed.">        if (!userService.isLoggedIn())</span>
+<span class="nc" id="L133">            throw new InvalidInputException(&quot;Login first. Usage: login &lt;username&gt; &lt;password&gt;&quot;);</span>
+        List&lt;String&gt; cats;
+<span class="pc bpc" id="L135" title="2 of 4 branches missed.">        if (!args.isEmpty() &amp;&amp; &quot;categories&quot;.equals(args.get(0))) {</span>
+<span class="nc" id="L136">            cats = args.subList(1, args.size());</span>
+        } else {
+<span class="fc" id="L138">            cats = args;</span>
+        }
+<span class="fc" id="L140">        double income = financeService.getTotalIncome();</span>
+<span class="fc" id="L141">        double expense = financeService.getTotalExpenses();</span>
+<span class="fc" id="L142">        System.out.printf(Locale.US, &quot;Общий доход: %.1f%n&quot;, income);</span>
+<span class="fc" id="L143">        System.out.printf(Locale.US, &quot;Общие расходы: %.1f%n&quot;, expense);</span>
+<span class="fc" id="L144">        printTable(</span>
+<span class="fc" id="L145">                financeService.getIncomeByCategories(cats),</span>
+<span class="fc" id="L146">                financeService.getExpensesByCategories(cats));</span>
+<span class="pc bpc" id="L147" title="1 of 2 branches missed.">        if (financeService.getTotalExpenses() &gt; financeService.getTotalIncome()) {</span>
+<span class="nc" id="L148">            System.out.println(&quot;Alert: Expenses exceed income!&quot;);</span>
+        }
+<span class="fc" id="L150">    }</span>
+
+    private void transfer(List&lt;String&gt; args) {
+<span class="nc bnc" id="L153" title="All 2 branches missed.">        if (!userService.isLoggedIn())</span>
+<span class="nc" id="L154">            throw new InvalidInputException(&quot;Login first. Usage: login &lt;username&gt; &lt;password&gt;&quot;);</span>
+<span class="nc bnc" id="L155" title="All 2 branches missed.">        if (args.size() != 2) throw new InvalidInputException(&quot;Usage: transfer &lt;to_user&gt; &lt;amount&gt;&quot;);</span>
+<span class="nc" id="L156">        double amt = Double.parseDouble(args.get(1));</span>
+<span class="nc" id="L157">        financeService.transfer(args.get(0), amt);</span>
+<span class="nc" id="L158">        System.out.println(&quot;Transfer sent!&quot;);</span>
+<span class="nc" id="L159">    }</span>
+
+    private void export(List&lt;String&gt; args) {
+<span class="pc bpc" id="L162" title="1 of 2 branches missed.">        if (!userService.isLoggedIn())</span>
+<span class="nc" id="L163">            throw new InvalidInputException(&quot;Login first. Usage: login &lt;username&gt; &lt;password&gt;&quot;);</span>
+<span class="pc bpc" id="L164" title="1 of 2 branches missed.">        if (args.isEmpty()) throw new InvalidInputException(&quot;Usage: export &lt;file.json&gt;&quot;);</span>
+<span class="fc" id="L165">        String file = args.get(0);</span>
+<span class="fc" id="L166">        Map&lt;String, Object&gt; data =</span>
+<span class="fc" id="L167">                Map.of(</span>
+<span class="fc" id="L168">                        &quot;transactions&quot;, userService.getCurrentUser().getWallet().getTransactions(),</span>
+<span class="fc" id="L169">                        &quot;budgets&quot;, userService.getCurrentUser().getWallet().getBudgets());</span>
+<span class="fc" id="L170">        try (FileWriter w = new FileWriter(file)) {</span>
+<span class="fc" id="L171">            new Gson().toJson(data, w);</span>
+<span class="fc" id="L172">            System.out.println(&quot;Exported to &quot; + file);</span>
+<span class="nc" id="L173">        } catch (IOException e) {</span>
+<span class="nc" id="L174">            throw new RuntimeException(&quot;Export failed&quot;, e);</span>
+<span class="fc" id="L175">        }</span>
+<span class="fc" id="L176">    }</span>
+
+    private void imprt(List&lt;String&gt; args) {
+<span class="nc bnc" id="L179" title="All 2 branches missed.">        if (!userService.isLoggedIn())</span>
+<span class="nc" id="L180">            throw new InvalidInputException(&quot;Login first. Usage: login &lt;username&gt; &lt;password&gt;&quot;);</span>
+<span class="nc bnc" id="L181" title="All 2 branches missed.">        if (args.isEmpty()) throw new InvalidInputException(&quot;Usage: import &lt;file.json&gt;&quot;);</span>
+<span class="nc" id="L182">        String file = args.get(0);</span>
+<span class="nc" id="L183">        Gson gson = new Gson();</span>
+<span class="nc" id="L184">        try (FileReader r = new FileReader(file)) {</span>
+            @SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L186">            Map&lt;String, Object&gt; data = gson.fromJson(r, Map.class);</span>
+            @SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L188">            List&lt;Transaction&gt; trans =</span>
+<span class="nc" id="L189">                    gson.fromJson(</span>
+<span class="nc" id="L190">                            gson.toJsonTree(data.get(&quot;transactions&quot;)),</span>
+<span class="nc" id="L191">                            new TypeToken&lt;List&lt;Transaction&gt;&gt;() {}.getType());</span>
+            @SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L193">            Map&lt;String, Double&gt; buds =</span>
+<span class="nc" id="L194">                    gson.fromJson(</span>
+<span class="nc" id="L195">                            gson.toJsonTree(data.get(&quot;budgets&quot;)),</span>
+<span class="nc" id="L196">                            new TypeToken&lt;Map&lt;String, Double&gt;&gt;() {}.getType());</span>
+<span class="nc" id="L197">            Wallet w = userService.getCurrentUser().getWallet();</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">            w.setTransactions(trans != null ? trans : List.of());</span>
+<span class="nc bnc" id="L199" title="All 2 branches missed.">            w.setBudgets(buds != null ? buds : new HashMap&lt;&gt;());</span>
+<span class="nc" id="L200">            System.out.println(&quot;Imported successfully!&quot;);</span>
+<span class="nc" id="L201">        } catch (Exception e) {</span>
+<span class="nc" id="L202">            throw new InvalidInputException(&quot;Import failed: &quot; + e.getMessage());</span>
+<span class="nc" id="L203">        }</span>
+<span class="nc" id="L204">    }</span>
+
+    private void listCategories() {
+<span class="nc bnc" id="L207" title="All 2 branches missed.">        if (!userService.isLoggedIn())</span>
+<span class="nc" id="L208">            throw new InvalidInputException(&quot;Login first. Usage: login &lt;username&gt; &lt;password&gt;&quot;);</span>
+<span class="nc" id="L209">        System.out.println(</span>
+<span class="nc" id="L210">                &quot;Categories: &quot; + userService.getCurrentUser().getWallet().getBudgets().keySet());</span>
+<span class="nc" id="L211">    }</span>
+
+    private void logout() {
+<span class="nc" id="L214">        userService.logout();</span>
+<span class="nc" id="L215">        System.out.println(&quot;Logged out.&quot;);</span>
+<span class="nc" id="L216">    }</span>
+
+    void exit() {
+<span class="fc" id="L219">        running = false;</span>
+<span class="fc" id="L220">        System.out.println(&quot;Goodbye!&quot;);</span>
+<span class="fc" id="L221">    }</span>
+
+    void printHelp() {
+<span class="fc" id="L224">        System.out.println(</span>
+                &quot;Commands: register/login &lt;user&gt; &lt;pass&gt;, &quot;
+                        + &quot;add &lt;income|expense&gt; &lt;cat&gt; &lt;amt&gt;, &quot;
+                        + &quot;set/edit budget &lt;cat&gt; &lt;amt&gt;, &quot;
+                        + &quot;stats [categories &lt;cats&gt;], transfer &lt;to&gt; &lt;amt&gt;, &quot;
+                        + &quot;export/import &lt;file&gt;, list categories, &quot;
+                        + &quot;logout, help, exit.&quot;);
+<span class="fc" id="L231">        System.out.println(</span>
+                &quot;Examples: 'add expense food 1000', &quot;
+                        + &quot;'stats categories food transport', 'set budget еда 4000'.&quot;);
+<span class="fc" id="L234">    }</span>
+
+    private void printTable(Map&lt;String, Double&gt; incomes, Map&lt;String, Double&gt; expenses) {
+<span class="fc" id="L237">        System.out.println(&quot;| Category | Income | Expense | Budget | Remaining |&quot;);</span>
+<span class="fc" id="L238">        System.out.println(&quot;|----------|--------|---------|--------|-----------|&quot;);</span>
+<span class="fc" id="L239">        Set&lt;String&gt; allCats = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L240">        allCats.addAll(incomes.keySet());</span>
+<span class="fc" id="L241">        allCats.addAll(expenses.keySet());</span>
+<span class="fc" id="L242">        allCats.forEach(</span>
+                cat -&gt; {
+<span class="fc" id="L244">                    double inc = incomes.getOrDefault(cat, 0.0);</span>
+<span class="fc" id="L245">                    double exp = expenses.getOrDefault(cat, 0.0);</span>
+<span class="fc" id="L246">                    double bud = userService.getCurrentUser().getWallet().getBudget(cat);</span>
+<span class="fc" id="L247">                    double rem = financeService.getBudgetRemaining(cat);</span>
+<span class="pc bpc" id="L248" title="1 of 2 branches missed.">                    String budStr = (bud &gt; 0) ? String.format(Locale.US, &quot;%.1f&quot;, bud) : &quot;N/A&quot;;</span>
+<span class="pc bpc" id="L249" title="1 of 2 branches missed.">                    String remStr = (bud &gt; 0) ? String.format(Locale.US, &quot;%.1f&quot;, rem) : &quot;N/A&quot;;</span>
+<span class="fc" id="L250">                    System.out.printf(</span>
+                            Locale.US,
+                            &quot;| %-8s | %-6.1f | %-7.1f | %-6s | %-9s |%n&quot;,
+                            cat,
+<span class="fc" id="L254">                            inc,</span>
+<span class="fc" id="L255">                            exp,</span>
+                            budStr,
+                            remStr);
+<span class="fc" id="L258">                });</span>
+<span class="fc" id="L259">    }</span>
+
+    void saveAll() {
+<span class="fc" id="L262">        storage.getAllUsers().forEach(storage::saveWallet);</span>
+<span class="fc" id="L263">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

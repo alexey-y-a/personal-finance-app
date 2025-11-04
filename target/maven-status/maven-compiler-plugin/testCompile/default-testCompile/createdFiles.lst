@@ -1,0 +1,6 @@
+ru/financeapp/core/FinanceServiceTest.class
+ru/financeapp/infra/FileJsonStorageTest$1.class
+ru/financeapp/cli/ConsoleAppTest.class
+ru/financeapp/cli/CommandParserTest.class
+ru/financeapp/infra/FileJsonStorageTest.class
+ru/financeapp/core/UserServiceTest.class

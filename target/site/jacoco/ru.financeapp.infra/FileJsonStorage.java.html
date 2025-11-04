@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FileJsonStorage.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">personal-finance-app</a> &gt; <a href="index.source.html" class="el_package">ru.financeapp.infra</a> &gt; <span class="el_source">FileJsonStorage.java</span></div><h1>FileJsonStorage.java</h1><pre class="source lang-java linenums">package ru.financeapp.infra;
+
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import com.google.gson.Gson;
+import ru.financeapp.core.User;
+import ru.financeapp.core.Wallet;
+
+public class FileJsonStorage implements Storage {
+<span class="pc" id="L19">    protected String walletsDir = &quot;wallets/&quot;;</span>
+    private static final String USERS_FILE = &quot;users.json&quot;;
+<span class="pc" id="L21">    private final Gson gson = new Gson();</span>
+
+<span class="fc" id="L23">    public FileJsonStorage() {</span>
+<span class="fc" id="L24">        initDirs();</span>
+<span class="fc" id="L25">    }</span>
+
+<span class="nc" id="L27">    public FileJsonStorage(String customWalletsDir) {</span>
+<span class="nc" id="L28">        this.walletsDir = customWalletsDir;</span>
+<span class="nc" id="L29">        initDirs();</span>
+<span class="nc" id="L30">    }</span>
+
+    private void initDirs() {
+        try {
+<span class="fc" id="L34">            Files.createDirectories(Paths.get(walletsDir));</span>
+<span class="nc" id="L35">        } catch (IOException e) {</span>
+<span class="nc" id="L36">            throw new RuntimeException(&quot;Failed to create wallets dir&quot;, e);</span>
+<span class="fc" id="L37">        }</span>
+<span class="fc" id="L38">    }</span>
+
+    @Override
+    public void saveUser(User user) {
+<span class="fc" id="L42">        Map&lt;String, String&gt; users = loadUsers();</span>
+<span class="fc" id="L43">        users.put(user.getUsername(), user.getPassword());</span>
+<span class="fc" id="L44">        Path usersPath = getUsersFilePath();</span>
+<span class="fc" id="L45">        try (FileWriter writer = new FileWriter(usersPath.toString())) {</span>
+<span class="fc" id="L46">            gson.toJson(users, writer);</span>
+<span class="nc" id="L47">        } catch (IOException e) {</span>
+<span class="nc" id="L48">            throw new RuntimeException(&quot;Failed to save user&quot;, e);</span>
+<span class="fc" id="L49">        }</span>
+<span class="fc" id="L50">        saveWallet(user);</span>
+<span class="fc" id="L51">    }</span>
+
+    @Override
+    public User findUser(String username) {
+        @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L56">        Map&lt;String, String&gt; users = loadUsers();</span>
+<span class="fc" id="L57">        String pass = users.get(username);</span>
+<span class="fc bfc" id="L58" title="All 2 branches covered.">        if (pass == null) return null;</span>
+<span class="fc" id="L59">        User user = new User(username, pass);</span>
+<span class="fc" id="L60">        loadWallet(user);</span>
+<span class="fc" id="L61">        return user;</span>
+    }
+
+    @Override
+    public List&lt;User&gt; getAllUsers() {
+        @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L67">        Map&lt;String, String&gt; users = loadUsers();</span>
+<span class="fc" id="L68">        return users.keySet().stream()</span>
+<span class="fc" id="L69">                .map(this::findUser)</span>
+<span class="pc bpc" id="L70" title="1 of 2 branches missed.">                .filter(u -&gt; u != null)</span>
+<span class="fc" id="L71">                .distinct()</span>
+<span class="fc" id="L72">                .collect(Collectors.toList());</span>
+    }
+
+    @Override
+    public void loadWallet(User user) {
+<span class="fc" id="L77">        Path file = Paths.get(getWalletsDir() + user.getUsername() + &quot;.wallet.json&quot;);</span>
+<span class="pc bpc" id="L78" title="1 of 2 branches missed.">        if (!Files.exists(file)) {</span>
+<span class="nc" id="L79">            user.setWallet(new Wallet());</span>
+<span class="nc" id="L80">            return;</span>
+        }
+<span class="fc" id="L82">        try (FileReader reader = new FileReader(file.toString())) {</span>
+<span class="fc" id="L83">            Wallet wallet = gson.fromJson(reader, Wallet.class);</span>
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">            user.setWallet(wallet != null ? wallet : new Wallet());</span>
+<span class="nc" id="L85">        } catch (IOException e) {</span>
+<span class="nc" id="L86">            throw new RuntimeException(&quot;Failed to load wallet&quot;, e);</span>
+<span class="fc" id="L87">        }</span>
+<span class="fc" id="L88">    }</span>
+
+    @Override
+    public void saveWallet(User user) {
+<span class="pc bpc" id="L92" title="1 of 2 branches missed.">        if (user.getWallet() == null) user.setWallet(new Wallet());</span>
+<span class="fc" id="L93">        Path dir = Paths.get(getWalletsDir());</span>
+        try {
+<span class="fc" id="L95">            Files.createDirectories(dir);</span>
+<span class="nc" id="L96">        } catch (IOException e) {</span>
+<span class="nc" id="L97">            throw new RuntimeException(&quot;Failed to create wallet dir&quot;, e);</span>
+<span class="fc" id="L98">        }</span>
+<span class="fc" id="L99">        Path file = dir.resolve(user.getUsername() + &quot;.wallet.json&quot;);</span>
+<span class="fc" id="L100">        try (FileWriter writer = new FileWriter(file.toString())) {</span>
+<span class="fc" id="L101">            gson.toJson(user.getWallet(), writer);</span>
+<span class="nc" id="L102">        } catch (IOException e) {</span>
+<span class="nc" id="L103">            throw new RuntimeException(&quot;Failed to save wallet&quot;, e);</span>
+<span class="fc" id="L104">        }</span>
+<span class="fc" id="L105">    }</span>
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    protected Map&lt;String, String&gt; loadUsers() {
+<span class="fc" id="L109">        Path file = getUsersFilePath();</span>
+<span class="fc bfc" id="L110" title="All 2 branches covered.">        if (!Files.exists(file)) return new HashMap&lt;&gt;();</span>
+<span class="fc" id="L111">        try (FileReader reader = new FileReader(file.toString())) {</span>
+<span class="fc" id="L112">            return gson.fromJson(reader, Map.class);</span>
+<span class="nc" id="L113">        } catch (IOException e) {</span>
+<span class="nc" id="L114">            return new HashMap&lt;&gt;();</span>
+        }
+    }
+
+    protected String getWalletsDir() {
+<span class="nc" id="L119">        return walletsDir;</span>
+    }
+
+    protected Path getUsersFilePath() {
+<span class="nc" id="L123">        return Paths.get(USERS_FILE);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

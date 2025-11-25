@@ -101,21 +101,15 @@ jobs:
         port: ${{ secrets.SELECTEL_PORT }}
         script: |
             cd /opt/finance-app
-
-            if pgrep -f "personal-finance-app" > /dev/null; then
-              pkill -f "personal-finance-app"
-              sleep 3
-            fi
+            pkill -f "personal-finance-app" || true
+            sleep 2
             nohup java -jar personal-finance-app-1.0.0.jar > app.log 2>&1 &
-            sleep 5
+            sleep 3
             if pgrep -f "personal-finance-app" > /dev/null; then
-
-              ps aux | grep personal-finance-app | grep -v grep
-              echo "Last 10 lines of log:"
-              tail -n 10 app.log || echo "Log file not available yet"
+              echo "JAR running (PID: $(pgrep -f 'personal-finance-app'))"
             else
-              echo "Checking log for errors:"
-              cat app.log || echo "No log file found"
+              echo "JAR not running, check app.log for errors"
+              cat app.log || echo "No log"
               exit 1
             fi
             echo "Deployed and restarted on Selectel VPS!"

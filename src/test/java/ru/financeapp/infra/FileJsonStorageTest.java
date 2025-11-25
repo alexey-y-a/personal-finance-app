@@ -6,10 +6,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
 import com.google.gson.Gson;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -77,6 +79,16 @@ class FileJsonStorageTest {
         assertEquals(2, all.size());
     }
 
+    @AfterEach
+    void tearDown() throws IOException {
+        if (tempDir != null) {
+            Files.walk(tempDir)
+                 .sorted(Comparator.reverseOrder())
+                 .map(Path::toFile)
+                 .forEach(File::delete);
+        }
+    }
+
     @Test
     void loadWallet_Existing_LoadsData() throws IOException {
         User user = new User("test", "pass");
@@ -85,6 +97,9 @@ class FileJsonStorageTest {
         user.setWallet(w);
         Path walletFile = tempDir.resolve("wallets/test.wallet.json");
         Files.createDirectories(walletFile.getParent());
+        try (FileWriter writer = new FileWriter(walletFile.toFile())) {
+            new Gson().toJson(w, writer);
+        }
         new Gson().toJson(w, new FileWriter(walletFile.toFile()));
         storage.saveUser(user);
         storage.loadWallet(user);

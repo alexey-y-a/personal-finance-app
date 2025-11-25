@@ -2,7 +2,6 @@ package ru.financeapp.infra;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -82,11 +81,23 @@ class FileJsonStorageTest {
 
     @AfterEach
     void tearDown() throws IOException {
-        if (tempDir != null) {
+        if (tempDir != null && Files.exists(tempDir)) {
+            // Более надежный способ удаления временных файлов
             Files.walk(tempDir)
                     .sorted(Comparator.reverseOrder())
-                    .map(Path::toFile)
-                    .forEach(File::delete);
+                    .forEach(
+                            path -> {
+                                try {
+                                    Files.delete(path);
+                                } catch (IOException e) {
+                                    // Игнорируем ошибки удаления (файлы могут быть заблокированы)
+                                    System.err.println(
+                                            "Warning: Failed to delete "
+                                                    + path
+                                                    + ": "
+                                                    + e.getMessage());
+                                }
+                            });
         }
     }
 

@@ -34,7 +34,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ~/.m2
-        key: $$ {{ runner.os }}-m2- $${{ hashFiles('**/pom.xml') }}
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
 
     - name: Build with Maven
@@ -74,7 +74,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ~/.m2
-        key: $$ {{ runner.os }}-m2- $${{ hashFiles('**/pom.xml') }}
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
 
     - name: Build fat-jar
@@ -103,10 +103,6 @@ jobs:
             cd /opt/finance-app
             pkill -f "personal-finance-app" || true
             nohup java -jar personal-finance-app-1.0.0.jar > app.log 2>&1 &
-            sleep 2
-            if [ -f app.log ]; then
-              tail -n 5 app.log
-            else
-              echo "app.log not created yet, but JAR started"
-            fi
+            sleep 3
+            echo "JAR started, check app.log manually if needed"
             echo "Deployed and restarted on Selectel VPS!"

@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: ru.financeapp.core.FinanceServiceTest
--------------------------------------------------------------------------------
-Tests run: 15, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.587 s -- in ru.financeapp.core.FinanceServiceTest

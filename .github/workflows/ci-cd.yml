@@ -105,6 +105,5 @@ jobs:
             sleep 2
             nohup java -jar personal-finance-app-1.0.0.jar < /dev/null > app.log 2>&1 &
             sleep 5
-            echo "JAR launched, check app.log for CLI output"
-            cat app.log || echo "Log empty (app exited after print)"
+            echo "JAR launched (CLI output in app.log, PID may exit after print)"
             echo "Deployed on Selectel VPS!"

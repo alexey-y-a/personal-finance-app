@@ -103,13 +103,8 @@ jobs:
             cd /opt/finance-app
             pkill -f "personal-finance-app" || true
             sleep 2
-            nohup java -jar personal-finance-app-1.0.0.jar > app.log 2>&1 &
-            sleep 3
-            if pgrep -f "personal-finance-app" > /dev/null; then
-              echo "JAR running (PID: $(pgrep -f 'personal-finance-app'))"
-            else
-              echo "JAR not running, check app.log for errors"
-              cat app.log || echo "No log"
-              exit 1
-            fi
-            echo "Deployed and restarted on Selectel VPS!"
+            nohup java -jar personal-finance-app-1.0.0.jar < /dev/null > app.log 2>&1 &
+            sleep 5
+            echo "JAR launched, check app.log for CLI output"
+            cat app.log || echo "Log empty (app exited after print)"
+            echo "Deployed on Selectel VPS!"

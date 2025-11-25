@@ -101,10 +101,11 @@ jobs:
             port: ${{ secrets.SELECTEL_PORT }}
             script: |
                 cd /opt/finance-app
+                echo "Connected, JAR exists: $(ls -la personal-finance-app-1.0.0.jar)"
                 pkill -f "personal-finance-app" || true
-                sleep 2
                 nohup java -jar personal-finance-app-1.0.0.jar < /dev/null > app.log 2>&1 &
-                sleep 5
-                echo "JAR launched (CLI output in app.log, PID may exit after print)"
+                echo "JAR launched, check app.log manually"
                 echo "Deployed on Selectel VPS!"
             command_timeout: 120s
+            timeout: 60s
+            debug: true

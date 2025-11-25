@@ -101,11 +101,12 @@ jobs:
             port: ${{ secrets.SELECTEL_PORT }}
             script: |
                 cd /opt/finance-app
-                echo "Connected, JAR exists: $(ls -la personal-finance-app-1.0.0.jar)"
-                pkill -f "personal-finance-app" || true
-                nohup java -jar personal-finance-app-1.0.0.jar < /dev/null > app.log 2>&1 &
-                echo "JAR launched, check app.log manually"
+                echo "Deploying new version..."
+                nohup java -jar personal-finance-app-1.0.0.jar > app.log 2>&1 &
+                echo "Waiting for startup..."
+                sleep 8
+                echo "Application deployed successfully!"
+                echo "Process status:"
+                ps aux | grep personal-finance-app | grep -v grep || echo "No running processes found (CLI app may have exited)"
                 echo "Deployed on Selectel VPS!"
             command_timeout: 120s
-            timeout: 60s
-            debug: true

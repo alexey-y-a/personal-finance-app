@@ -92,18 +92,19 @@ jobs:
         strip_components: 0
         rm: true
 
-    - name: Restart app on VPS
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.SELECTEL_HOST }}
-        username: ${{ secrets.SELECTEL_USER }}
-        key: ${{ secrets.SELECTEL_SSH_KEY }}
-        port: ${{ secrets.SELECTEL_PORT }}
-        script: |
-            cd /opt/finance-app
-            pkill -f "personal-finance-app" || true
-            sleep 2
-            nohup java -jar personal-finance-app-1.0.0.jar < /dev/null > app.log 2>&1 &
-            sleep 5
-            echo "JAR launched (CLI output in app.log, PID may exit after print)"
-            echo "Deployed on Selectel VPS!"
+    -   name: Restart app on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+            host: ${{ secrets.SELECTEL_HOST }}
+            username: ${{ secrets.SELECTEL_USER }}
+            key: ${{ secrets.SELECTEL_SSH_KEY }}
+            port: ${{ secrets.SELECTEL_PORT }}
+            script: |
+                cd /opt/finance-app
+                pkill -f "personal-finance-app" || true
+                sleep 2
+                nohup java -jar personal-finance-app-1.0.0.jar < /dev/null > app.log 2>&1 &
+                sleep 5
+                echo "JAR launched (CLI output in app.log, PID may exit after print)"
+                echo "Deployed on Selectel VPS!"
+            command_timeout: 120s

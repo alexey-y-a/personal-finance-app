@@ -82,7 +82,6 @@ class FileJsonStorageTest {
     @AfterEach
     void tearDown() throws IOException {
         if (tempDir != null && Files.exists(tempDir)) {
-            // Более надежный способ удаления временных файлов
             Files.walk(tempDir)
                     .sorted(Comparator.reverseOrder())
                     .forEach(
@@ -90,7 +89,6 @@ class FileJsonStorageTest {
                                 try {
                                     Files.delete(path);
                                 } catch (IOException e) {
-                                    // Игнорируем ошибки удаления (файлы могут быть заблокированы)
                                     System.err.println(
                                             "Warning: Failed to delete "
                                                     + path

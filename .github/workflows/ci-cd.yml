@@ -10,9 +10,17 @@ jobs:
   build-and-test:
     runs-on: ${{ matrix.os }}
     strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-12, macos-13]  # Linux, Windows, macOS Intel/ARM
-      fail-fast: false
+        matrix:
+            # ТЕСТИРОВАНИЕ НА LINUX, WINDOWS, macOS (INTEL и APPLE SILICON)
+            include:
+                -   os: ubuntu-latest
+                    name: Linux
+                -   os: windows-latest
+                    name: Windows
+                -   os: macos-15
+                    name: macOS Intel
+                -   os: macos-latest
+                    name: macOS Apple Silicon
     steps:
     - uses: actions/checkout@v4
 
@@ -82,7 +90,7 @@ jobs:
         source: "target/personal-finance-app-1.0.0.jar"
         target: "/opt/finance-app/"
         strip_components: 0
-        rm: true 
+        rm: true
 
     - name: Restart app on VPS
       uses: appleboy/ssh-action@v1.0.3
@@ -93,7 +101,7 @@ jobs:
         port: ${{ secrets.SELECTEL_PORT }}
         script: |
           cd /opt/finance-app
-          pkill -f "personal-finance-app" || true  # Stop old process
+          pkill -f "personal-finance-app" || true
           nohup java -jar personal-finance-app-1.0.0.jar > app.log 2>&1 &
           echo "Deployed and restarted on Selectel VPS!"
-          tail -n 5 app.log  # Показать логи
+          tail -n 5 app.log

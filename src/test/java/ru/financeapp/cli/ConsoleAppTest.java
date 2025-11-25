@@ -114,7 +114,6 @@ class ConsoleAppTest {
         app.handleCommand(cmd);
 
         String output = outContent.toString();
-        // ИСПРАВЛЕННЫЕ ПРОВЕРКИ:
         assertTrue(
                 output.contains("Category")
                         && output.contains("Income")

@@ -84,9 +84,9 @@ class FileJsonStorageTest {
     void tearDown() throws IOException {
         if (tempDir != null) {
             Files.walk(tempDir)
-                 .sorted(Comparator.reverseOrder())
-                 .map(Path::toFile)
-                 .forEach(File::delete);
+                    .sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .forEach(File::delete);
         }
     }
 
@@ -98,10 +98,11 @@ class FileJsonStorageTest {
         user.setWallet(w);
         Path walletFile = tempDir.resolve("wallets/test.wallet.json");
         Files.createDirectories(walletFile.getParent());
+
         try (FileWriter writer = new FileWriter(walletFile.toFile())) {
             new Gson().toJson(w, writer);
         }
-        new Gson().toJson(w, new FileWriter(walletFile.toFile()));
+
         storage.saveUser(user);
         storage.loadWallet(user);
         assertEquals(4000.0, user.getWallet().getBudget("food"), 0.01);

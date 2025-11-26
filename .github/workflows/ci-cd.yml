@@ -92,21 +92,15 @@ jobs:
         strip_components: 0
         rm: true
 
-    -   name: Restart app on VPS
-        uses: appleboy/ssh-action@v1.0.3
+    -   name: Copy JAR to Selectel VPS
+        uses: appleboy/scp-action@v0.1.4
         with:
             host: ${{ secrets.SELECTEL_HOST }}
             username: ${{ secrets.SELECTEL_USER }}
             key: ${{ secrets.SELECTEL_SSH_KEY }}
             port: ${{ secrets.SELECTEL_PORT }}
-            script: |
-                cd /opt/finance-app
-                echo "Deploying new version..."
-                nohup java -jar personal-finance-app-1.0.0.jar > app.log 2>&1 &
-                echo "Waiting for startup..."
-                sleep 8
-                echo "Application deployed successfully!"
-                echo "Process status:"
-                ps aux | grep personal-finance-app | grep -v grep || echo "No running processes found (CLI app may have exited)"
-                echo "Deployed on Selectel VPS!"
-            command_timeout: 120s
+            source: "target/personal-finance-app-1.0.0.jar"
+            target: "/opt/finance-app"
+            strip_components: 0
+            rm: true
+            debug: true
